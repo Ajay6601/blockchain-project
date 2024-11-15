@@ -7,7 +7,7 @@ module.exports = {
   solidity: "0.8.27",
   networks: {
     localhost: {
-      chainId: 31337, // Explicitly define chainId for localhost network
+      chainId: 31337,
     },
   },
 };
