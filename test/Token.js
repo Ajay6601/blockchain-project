@@ -39,26 +39,34 @@ describe("Token", ()=> {
 	beforeEach(async()=>{
 		// Fetch token from blockchain
 		const Token=await ethers.getContractFactory('Token')
-		token=await Token.deploy('Ajay')
+		token=await Token.deploy('Ajay','DAJ','1000000')
 		await token.deployed();
 	})
+
+describe("Deployment",()=>{
+	const name="Ajay"
+	const symbol="DAJ"
+	const decimals='18'
+	const totalSupply=tokens('1000000')
+
+
   it("has correct name", async ()=> {
     const chai = await import("chai");
     const { expect } = chai;
-    expect(await token.name()).to.equal("Ajay");
+    expect(await token.name()).to.equal(name);
   })
 
   it("has correct symbol", async ()=> {
     const chai = await import("chai");
     const { expect } = chai;
-    expect(await token.symbol ()).to.equal("DAJ");
+    expect(await token.symbol ()).to.equal(symbol);
   })
 
   it("has correct decimal", async ()=> {
     const chai = await import("chai");
     const { expect } = chai;
-    const decimals = await token.decimals();
-    expect(decimals.toString()).to.equal('18');
+    const tokenDecimals = await token.decimals();
+  expect(tokenDecimals.toString()).to.equal(decimals.toString());
   })
 
   it("has correct total supply", async ()=> {
@@ -67,8 +75,13 @@ describe("Token", ()=> {
     // const value = ethers.utils.parseUnits('1000000', 'ether'); // Expected value in BigNumber
   	// const totalSupply = await token.totalSupply(); // Actual value in BigNumber
     // expect(await token.totalSupply()).to.equal(value);
-      const totalSupply = await token.totalSupply();
-  expect(totalSupply.eq(tokens('1000000'))).to.be.true;
+      const tokenTotalSupply = await token.totalSupply();
+  expect(tokenTotalSupply.eq(totalSupply)).to.be.true; // Compare using .eq()
   })
+  })
+
+	// Describe Spending....
+	// Describe approving...
+
 });
 
