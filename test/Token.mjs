@@ -1,34 +1,6 @@
-
-// describe("Token", function () {
-//   it("has correct name", async function () {
-//     const chai = await import("chai");
-//     const { expect } = chai;
-//     const { ethers } = require("hardhat");
-
-//     const Token = await ethers.getContractFactory("Token");
-//     const token = await Token.deploy();
-//     await token.deployed();
-
-//     const name = await token.name();
-//     expect(name).to.equal("Ajay");
-//   })
-
-//   it("has correct symbol", async function () {
-//     const chai = await import("chai");
-//     const { expect } = chai;
-//     const { ethers } = require("hardhat");
-
-//     const Token = await ethers.getContractFactory("Token");
-//     const token = await Token.deploy();
-//     await token.deployed();
-
-//     const symbol = await token.symbol ();
-//     expect(symbol).to.equal("DAJ");
-//   });
-// });
-
 import { expect } from "chai"; // Named import from chai
 import hardhat from "hardhat"; // Default import for hardhat
+// require("@nomicfoundation/hardhat-chai-matchers");
 
 const { ethers } = hardhat;
 
@@ -43,6 +15,7 @@ describe("Token", () => {
     const Token = await ethers.getContractFactory("Token");
     token = await Token.deploy("Ajay", "DAJ", "1000000");
     await token.deployed();
+    // console.log(token);
     accounts = await ethers.getSigners();
     deployer = accounts[0];
     receiver=accounts[1];
@@ -79,32 +52,66 @@ describe("Token", () => {
     });
   });
 
-  describe('Sending Token',()=>{
-  	let amount
-  	it("Transfers token balance", async () => {
-  const sender = deployer.address; // Deployer's address
-  const receiver = accounts[1].address; // Receiver's address
-  const amount = tokens(100); // Amount to transfer
+  describe("Sending Token", () => {
+  let amount, transaction, result;
 
-  // Log balances before transfer
-  // console.log("deployer balance before transfer", (await token.balanceOf(sender)).toString());
-  // console.log("receiver balance before transfer", (await token.balanceOf(receiver)).toString());
+describe ('Success',()=>{
 
-  // Perform the transfer
-  await token.transfer(receiver, amount);
 
-  // Log balances after transfer
-  // console.log("deployer balance after transfer", (await token.balanceOf(sender)).toString());
-  // console.log("receiver balance after transfer", (await token.balanceOf(receiver)).toString());
+	  beforeEach(async () => {
+	    amount = tokens(100);
+	    transaction = await token.connect(deployer).transfer(receiver.address, amount);
+	    result = await transaction.wait();
+	  });
 
-  // Assert sender's balance after transfer
-  expect((await token.balanceOf(sender)).toString()).to.equal(tokens(999900).toString());
+	  it("transfers token balance", async () => {
+	    // Assert sender's balance
+	    const deployerBalance = await token.balanceOf(deployer.address);
+	    expect(deployerBalance.toString()).to.equal(tokens(999900).toString());
 
-  // Assert receiver's balance after transfer
-  expect((await token.balanceOf(receiver)).toString()).to.equal(amount.toString());
+	    // Assert receiver's balance
+	    const receiverBalance = await token.balanceOf(receiver.address);
+	    expect(receiverBalance.toString()).to.equal(amount.toString());
+	  });
+
+	  it("emits a transfer event", async () => {
+	   const event=result.events[0]
+	   expect(event.event).to.equal('Transfer')
+	   const args=event.args
+	   expect(args.from).to.equal(deployer.address)
+	   expect(args.to).to.equal(receiver.address)
+	  	expect(args.value.eq(amount)).to.be.true; // Amount
+
+	});
+	});
+
+describe('Failure',()=>{
+	it("rejects insufficient balances",async()=>{
+    const invalidAmount = ethers.utils.parseUnits("1000000000", "ether"); // Amount greater than deployer's balance
+  try {
+    // Attempt to transfer more tokens than the deployer has
+    await token.connect(deployer).transfer(receiver.address, invalidAmount);
+    // If the above does not revert, fail the test
+    throw new Error("Transaction did not revert as expected");
+  } catch (error) {
+    // Check if the error is due to a revert
+    expect(error.message).to.include("revert"); // General revert check
+  }
+	})
+
+  it('rejects invalid recipient', async () => {
+  const amount = tokens(100);
+  try {
+    await token.connect(deployer).transfer('0x0000000000000000000000000000000000000000', amount);
+    throw new Error("Transaction did not revert as expected");
+  } catch (error) {
+    // Check for the revert error
+    expect(error.message).to.include("revert"); // Or the specific reason, if available
+  }
 });
 
-  	})
+})
+})
   })
 
 
